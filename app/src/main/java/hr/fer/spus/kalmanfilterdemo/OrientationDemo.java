@@ -6,8 +6,11 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.widget.TextView;
 
 import java.net.UnknownServiceException;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 public class OrientationDemo extends AppCompatActivity implements SensorEventListener {
 
@@ -15,6 +18,8 @@ public class OrientationDemo extends AppCompatActivity implements SensorEventLis
     private Sensor accMag, gyro;
     private float[] accMagValues = new float[3];
     private float[] gyroValues = new float[3];
+
+    private ScheduledThreadPoolExecutor scheduler = new ScheduledThreadPoolExecutor(1);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -29,6 +34,14 @@ public class OrientationDemo extends AppCompatActivity implements SensorEventLis
         sm.registerListener(this, accMag, SensorManager.SENSOR_DELAY_FASTEST);
         sm.registerListener(this, gyro, SensorManager.SENSOR_DELAY_FASTEST);
 
+
+        // Schedule UI updates
+        scheduler.scheduleAtFixedRate(new Runnable() {
+            @Override
+            public void run() {
+                runOnUiThread(showMeasurements);
+            }
+        }, 2000, 100, TimeUnit.MILLISECONDS);
     }
 
     public void onPause() {
@@ -44,9 +57,11 @@ public class OrientationDemo extends AppCompatActivity implements SensorEventLis
 
     @Override
     public void onSensorChanged(SensorEvent event) {
-        if (event.sensor.equals(accMag))
+        if (event.sensor.equals(accMag)) {
             accMagValues = event.values;
-        else if (event.sensor.equals(gyro))
+            for (int i = 0; i < 3; i++)
+                accMagValues[i] = (float) Math.toRadians(accMagValues[i]);
+        } else if (event.sensor.equals(gyro))
             gyroValues = event.values;
         else
             throw new RuntimeException(new UnknownServiceException("Unknown sensor"));
@@ -56,4 +71,23 @@ public class OrientationDemo extends AppCompatActivity implements SensorEventLis
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
 
     }
+
+
+
+    //////////// UI PART
+
+    Runnable showMeasurements = new Runnable() {
+        @Override
+        public void run() {
+            float[] UImeasurementData = accMagValues.clone();
+
+            TextView[] UImeasurementTV = new TextView[3];
+            UImeasurementTV[0] = (TextView) findViewById(R.id.azimuth);
+            UImeasurementTV[1] = (TextView) findViewById(R.id.pitch);
+            UImeasurementTV[2] = (TextView) findViewById(R.id.roll);
+
+            for (int i = 0; i < 3; i++)
+                UImeasurementTV[i].setText(String.format("%1.3f", UImeasurementData[i]));
+        }
+    };
 }
