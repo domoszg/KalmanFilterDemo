@@ -18,6 +18,7 @@ public class OrientationDemo extends AppCompatActivity implements SensorEventLis
     private Sensor accMag, gyro;
     private float[] accMagValues = new float[3];
     private float[] gyroValues = new float[3];
+    private float[] gyroEarth = new float[3];
 
     private ScheduledThreadPoolExecutor scheduler = new ScheduledThreadPoolExecutor(1);
 
@@ -61,9 +62,14 @@ public class OrientationDemo extends AppCompatActivity implements SensorEventLis
             accMagValues = event.values;
             for (int i = 0; i < 3; i++)
                 accMagValues[i] = (float) Math.toRadians(accMagValues[i]);
-        } else if (event.sensor.equals(gyro))
+        } else if (event.sensor.equals(gyro)) {
             gyroValues = event.values;
-        else
+            gyroValues[0] = - gyroValues[0];
+            gyroValues[1] = - gyroValues[1];
+            gyroValues[2] = - gyroValues[2];
+
+            gyroEarth = (new CoordinateSystems(accMagValues)).rotateSystem(gyroValues);
+        } else
             throw new RuntimeException(new UnknownServiceException("Unknown sensor"));
     }
 
@@ -79,7 +85,7 @@ public class OrientationDemo extends AppCompatActivity implements SensorEventLis
     Runnable showMeasurements = new Runnable() {
         @Override
         public void run() {
-            float[] UImeasurementData = accMagValues.clone();
+            float[] UImeasurementData = gyroEarth.clone();
 
             TextView[] UImeasurementTV = new TextView[3];
             UImeasurementTV[0] = (TextView) findViewById(R.id.azimuth);
