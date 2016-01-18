@@ -91,15 +91,24 @@ public class OrientationDemo extends AppCompatActivity implements SensorEventLis
     Runnable showMeasurements = new Runnable() {
         @Override
         public void run() {
-            float[] UImeasurementData = gyroEarth.clone();
+            float[] UIStateMeasurementData = accMagValues.clone();
+            float[] UIStateDerData = gyroEarth.clone();
 
-            TextView[] UImeasurementTV = new TextView[3];
-            UImeasurementTV[0] = (TextView) findViewById(R.id.azimuth);
-            UImeasurementTV[1] = (TextView) findViewById(R.id.pitch);
-            UImeasurementTV[2] = (TextView) findViewById(R.id.roll);
+            TextView[] UIStateMeasurementTV = new TextView[3];
+            UIStateMeasurementTV[0] = (TextView) findViewById(R.id.azimuth);
+            UIStateMeasurementTV[1] = (TextView) findViewById(R.id.pitch);
+            UIStateMeasurementTV[2] = (TextView) findViewById(R.id.roll);
 
             for (int i = 0; i < 3; i++)
-                UImeasurementTV[i].setText(String.format("%d", (int) Math.toDegrees(UImeasurementData[i])));
+                UIStateMeasurementTV[i].setText(String.format("%d", (int) Math.toDegrees(UIStateMeasurementData[i])));
+
+            TextView[] UIStateDerTV = new TextView[3];
+            UIStateDerTV[0] = (TextView) findViewById(R.id.gyroAzimuth);
+            UIStateDerTV[1] = (TextView) findViewById(R.id.gyroPitch);
+            UIStateDerTV[2] = (TextView) findViewById(R.id.gyroRoll);
+
+            for (int i = 0; i < 3; i++)
+                UIStateDerTV[i].setText(String.format("%d", (int) Math.toDegrees(UIStateDerData[i])));
         }
     };
 }
