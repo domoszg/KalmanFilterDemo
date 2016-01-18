@@ -2,6 +2,8 @@ package hr.fer.spus.kalmanfilterdemo;
 
 /**
  * Helper class for coordinate system manipulation
+ * Euler angles are defined as:
+ *   [ yaw, pitch, roll ]
  */
 public class CoordinateSystems {
     private float[] eulerAngles;
@@ -13,37 +15,37 @@ public class CoordinateSystems {
         this(new float[]{yaw, pitch, roll});
     }
 
-    public static float[] getRotationMatrix(float[] eulerAngles){ return (new CoordinateSystems(eulerAngles)).getRotationMatrix(); }
-    public float[] getRotationMatrix(){
-        float[] R = new float[9];
+    public static float[][] getRotationMatrix(float[] eulerAngles){ return (new CoordinateSystems(eulerAngles)).getRotationMatrix(); }
+    public float[][] getRotationMatrix(){
+        float[][] R = new float[3][3];
         float yaw = eulerAngles[0]; float pitch = eulerAngles[1]; float roll = eulerAngles[2];
 
         float cosy = (float) Math.cos(yaw); float siny = (float) Math.sin(yaw);
         float cosp = (float) Math.cos(pitch); float sinp = (float) Math.sin(pitch);
         float cosr = (float) Math.cos(roll); float sinr = (float) Math.sin(roll);
 
-        R[0] = cosr * cosy - sinr * siny * sinp;
-        R[1] = - cosp * siny;
-        R[2] = cosy * sinr + cosr * siny * sinp;
+        R[0][0] = cosr * cosy + sinr * siny * sinp;
+        R[0][1] = cosy * sinr * sinp - cosr * siny;
+        R[0][2] = cosp * sinr;
 
-        R[3] = cosr * siny + cosy * sinr * sinp;
-        R[4] = cosy * cosp;
-        R[5] = sinr * siny - sinp * cosr * cosy;
+        R[1][0] = cosp * siny;
+        R[1][1] = cosy * cosp;
+        R[1][2] = - sinp;
 
-        R[6] = - cosp * sinr;
-        R[7] = sinp;
-        R[8] = cosr * cosp;
+        R[2][0] = cosr * siny * sinp - cosy * sinr;
+        R[2][1] = sinr * siny + cosr * cosy * sinp;
+        R[2][2] = cosr * cosp;
 
         return R;
     }
 
     public float[] rotateSystem(float[] xyz){
         float[] newXYZ = new float[3];
-        float[] R = this.getRotationMatrix();
+        float[][] R = this.getRotationMatrix();
 
-        newXYZ[0] = xyz[0] * R[0] + xyz[1] * R[1] + xyz[2] * R[2];
-        newXYZ[1] = xyz[0] * R[3] + xyz[1] * R[4] + xyz[2] * R[5];
-        newXYZ[2] = xyz[0] * R[6] + xyz[1] * R[7] + xyz[2] * R[8];
+        newXYZ[0] = xyz[0] * R[0][0] + xyz[1] * R[0][1] + xyz[2] * R[0][2];
+        newXYZ[1] = xyz[0] * R[1][0] + xyz[1] * R[1][1] + xyz[2] * R[1][2];
+        newXYZ[2] = xyz[0] * R[2][0] + xyz[1] * R[2][1] + xyz[2] * R[2][2];
 
         return newXYZ;
     }

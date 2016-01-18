@@ -64,11 +64,17 @@ public class OrientationDemo extends AppCompatActivity implements SensorEventLis
                 accMagValues[i] = (float) Math.toRadians(accMagValues[i]);
         } else if (event.sensor.equals(gyro)) {
             gyroValues = event.values;
-            gyroValues[0] = - gyroValues[0];
-            gyroValues[1] = - gyroValues[1];
-            gyroValues[2] = - gyroValues[2];
 
-            gyroEarth = (new CoordinateSystems(accMagValues)).rotateSystem(gyroValues);
+            float[] gyroExchangedSystem = new float[3];
+            /*gyroExchangedSystem[0] = - gyroValues[2];
+            gyroExchangedSystem[1] = - gyroValues[0];
+            gyroExchangedSystem[2] = - gyroValues[1];
+            */
+            gyroExchangedSystem[0] = -gyroValues[2];
+            gyroExchangedSystem[1] = -gyroValues[0];
+            gyroExchangedSystem[2] = -gyroValues[1];
+
+            gyroEarth = (new CoordinateSystems(accMagValues)).rotateSystem(gyroExchangedSystem);
         } else
             throw new RuntimeException(new UnknownServiceException("Unknown sensor"));
     }
@@ -93,7 +99,7 @@ public class OrientationDemo extends AppCompatActivity implements SensorEventLis
             UImeasurementTV[2] = (TextView) findViewById(R.id.roll);
 
             for (int i = 0; i < 3; i++)
-                UImeasurementTV[i].setText(String.format("%1.3f", UImeasurementData[i]));
+                UImeasurementTV[i].setText(String.format("%d", (int) Math.toDegrees(UImeasurementData[i])));
         }
     };
 }

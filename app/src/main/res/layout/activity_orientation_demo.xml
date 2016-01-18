@@ -75,4 +75,73 @@
         android:layout_below="@+id/pitch"
         android:layout_toRightOf="@+id/textView"
         android:layout_toEndOf="@+id/textView" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:text="Kalman filtering"
+        android:id="@+id/textView5"
+        android:layout_below="@+id/textView4"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_marginTop="48dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="Azimuth"
+        android:id="@+id/textView6"
+        android:layout_below="@+id/textView5"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="Pitch"
+        android:id="@+id/textView7"
+        android:layout_alignParentStart="true"
+        android:layout_below="@+id/textView6"
+        android:layout_alignParentLeft="true" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="Roll"
+        android:id="@+id/textView8"
+        android:layout_alignParentStart="true"
+        android:layout_below="@+id/textView7"
+        android:layout_alignParentLeft="true" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="N/A"
+        android:id="@+id/kalman_yaw"
+        android:layout_below="@+id/textView5"
+        android:layout_alignLeft="@+id/roll"
+        android:layout_alignStart="@+id/roll" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="N/A"
+        android:id="@+id/kalman_pitch"
+        android:layout_below="@+id/kalman_yaw"
+        android:layout_alignLeft="@+id/roll" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="N/A"
+        android:id="@+id/kalman_roll"
+        android:layout_below="@+id/kalman_pitch"
+        android:layout_alignLeft="@+id/roll" />
 </RelativeLayout>
