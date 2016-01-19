@@ -20,7 +20,9 @@ public class OrientationDemo extends AppCompatActivity implements SensorEventLis
     private float[] gyroValues = new float[3];
     private float[] gyroEarth = new float[3];
 
-    private ScheduledThreadPoolExecutor scheduler = new ScheduledThreadPoolExecutor(1);
+    private KalmanFilter azimuthFilter, pitchFilter, rollFilter;
+
+    private ScheduledThreadPoolExecutor scheduler = new ScheduledThreadPoolExecutor(2);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,8 +34,8 @@ public class OrientationDemo extends AppCompatActivity implements SensorEventLis
         accMag = sm.getDefaultSensor(Sensor.TYPE_ORIENTATION);
         gyro = sm.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
 
-        sm.registerListener(this, accMag, SensorManager.SENSOR_DELAY_FASTEST);
-        sm.registerListener(this, gyro, SensorManager.SENSOR_DELAY_FASTEST);
+        sm.registerListener(this, accMag, SensorManager.SENSOR_DELAY_GAME);
+        sm.registerListener(this, gyro, SensorManager.SENSOR_DELAY_GAME);
 
 
         // Schedule UI updates
@@ -43,6 +45,19 @@ public class OrientationDemo extends AppCompatActivity implements SensorEventLis
                 runOnUiThread(showMeasurements);
             }
         }, 2000, 100, TimeUnit.MILLISECONDS);
+
+        azimuthFilter = new KalmanFilter(new float[]{0, 0}, new float[2][2], 0);
+        pitchFilter = new KalmanFilter(new float[]{0,0}, new float[2][2], 0);
+        rollFilter = new KalmanFilter(new float[]{0,0}, new float[2][2], 0);
+
+        scheduler.scheduleAtFixedRate(new Runnable() {
+            @Override
+            public void run() {
+                azimuthFilter.newMeasurement(new float[]{accMagValues[0], gyroEarth[0]}, (float) 0.1);
+                pitchFilter.newMeasurement(new float[]{accMagValues[1], gyroEarth[1]}, (float) 0.1);
+                rollFilter.newMeasurement(new float[]{accMagValues[2], gyroEarth[2]}, (float) 0.1);
+            }
+        }, 5000, 100, TimeUnit.MILLISECONDS);
     }
 
     public void onPause() {
@@ -59,17 +74,13 @@ public class OrientationDemo extends AppCompatActivity implements SensorEventLis
     @Override
     public void onSensorChanged(SensorEvent event) {
         if (event.sensor.equals(accMag)) {
-            accMagValues = event.values;
+            accMagValues = event.values.clone();
             for (int i = 0; i < 3; i++)
                 accMagValues[i] = (float) Math.toRadians(accMagValues[i]);
         } else if (event.sensor.equals(gyro)) {
-            gyroValues = event.values;
+            gyroValues = event.values.clone();
 
             float[] gyroExchangedSystem = new float[3];
-            /*gyroExchangedSystem[0] = - gyroValues[2];
-            gyroExchangedSystem[1] = - gyroValues[0];
-            gyroExchangedSystem[2] = - gyroValues[1];
-            */
             gyroExchangedSystem[0] = -gyroValues[2];
             gyroExchangedSystem[1] = -gyroValues[0];
             gyroExchangedSystem[2] = -gyroValues[1];
@@ -93,6 +104,7 @@ public class OrientationDemo extends AppCompatActivity implements SensorEventLis
         public void run() {
             float[] UIStateMeasurementData = accMagValues.clone();
             float[] UIStateDerData = gyroEarth.clone();
+            float[][] UIKalmanState = new float[][]{ azimuthFilter.getState(), pitchFilter.getState(), rollFilter.getState() };
 
             TextView[] UIStateMeasurementTV = new TextView[3];
             UIStateMeasurementTV[0] = (TextView) findViewById(R.id.azimuth);
@@ -109,6 +121,14 @@ public class OrientationDemo extends AppCompatActivity implements SensorEventLis
 
             for (int i = 0; i < 3; i++)
                 UIStateDerTV[i].setText(String.format("%d", (int) Math.toDegrees(UIStateDerData[i])));
+
+            TextView[] UIKalmanTV = new TextView[3];
+            UIKalmanTV[0] = (TextView) findViewById(R.id.kalman_yaw);
+            UIKalmanTV[1] = (TextView) findViewById(R.id.kalman_pitch);
+            UIKalmanTV[2] = (TextView) findViewById(R.id.kalman_roll);
+
+            for (int i = 0; i < 3; i ++)
+                UIKalmanTV[i].setText(String.format("%d", (int) Math.toDegrees(UIKalmanState[i][0])));
         }
     };
 }

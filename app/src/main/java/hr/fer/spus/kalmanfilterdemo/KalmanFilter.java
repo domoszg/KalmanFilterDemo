@@ -1,73 +1,113 @@
 package hr.fer.spus.kalmanfilterdemo;
 
 /**
- * Implementation requires two component state vectors.
+ * Simplified implementation with two state components:
+ *   [ x dx/dt ]
  */
 public class KalmanFilter {
-    private float[] x_t;      // Predicted state
-    private float[] x_tp;     // Previous state
-    private float[] u_t;      // Control input
-    private float[] w_t;      // Process noise
+    float[] x_tp = new float[2];
+    float[] x_t = new float[2];
 
-    private float[][] F_t;      // State transition matrix
-    private float[][] B_t;      // Control input matrix
+    float[] z_t = new float[2];
+    float dT = 0;
 
-    private float[] z_t;            // Measurement
-    private float[][] H_t;          // Measurement matrix
-    private float[] R_t;            // Measurement noise covariance
+    float[][] P_tp = new float[2][2];
+    float[][] P_t = new float[2][2];
 
-    private float[][] P_t;          // Covariance matrix predicted
-    private float[][] P_tp;         // Covariance matrix previous
-    private float[][] Q_t;          // Covariance noise
+    float y_t = 0;
+    float S_t = 0;
+    float[] K_t = new float[2];
 
-    private float[][] K_t;          // Kalman gain
+    float[][] Q = new float[2][2];
+    float R = 0;
 
-    /*
-    Prediction equations:
-        X_t = F_t * X_t-1 + B_t * u_t + w_t
-        P_t = F_t * P_t-1 * transp(F_t) + Q_t
+
+    /**
+     * Initializes a Kalman filter
+     * @param x_t Initial state
+     * @param Q Process noise covariance
+     * @param R Measurement noise covariance
      */
-    private synchronized void predictCalculation(){
-        x_tp = x_t.clone();
-        P_tp = P_t.clone();
+    public KalmanFilter(float[] x_t, float[][] Q, float R){
+        this.x_t = x_t.clone();
+        this.z_t = this.x_t.clone();
 
-        x_t = Matrices.SumVectors( Matrices.Mul2byVector(F_t, x_tp), Matrices.Mul2byVector(B_t, u_t) );
-        x_t = Matrices.SumVectors( x_t, w_t );
+        predict();
+    }
 
-        float[][] tF_t = Matrices.Transp2by2(F_t);
-        float[][] PMulTF = Matrices.Mul2by2(P_t, tF_t);
-        P_t = Matrices.Mul2by2(F_t, PMulTF);
-        P_t = Matrices.Add2by2(P_t, Q_t);
+    public void newMeasurement(float[] z_t, float dT){
+        this.z_t = z_t;
+        this.dT = dT;
+
+        measure();
+        predict();
     }
 
     /*
-    Kalman gain
-        K_t = P_t * transp(H_t) * inv( H_t * P_t * trasnp(H_T) + R_t )
-     */
-    private synchronized void KalmanGain(){
-        float[][] HtPtHtTrans = Matrices.Mul2by2(H_t, Matrices.Mul2by2(P_t, Matrices.Transp2by2(H_t)));
-        float[][] InvertedMember = Matrices.Inv2by2(Matrices.Add2by2(HtPtHtTrans, Q_t));
+      Prediction equations
 
-        K_t = Matrices.Mul2by2(P_t, Matrices.Mul2by2(Matrices.Transp2by2(H_t), InvertedMember));
+        x_tp = F_t * x_t + B_t * [ z_t[1] 0 ]'
+            F_t = [ 1 -dT ; 0 1 ]
+            B_t = [ dT 0 ]
+            z_t[1] == measured dx/dt
+
+        P_tp = F_t * P_t * transp(F_t) + Q
+            Q in form: [ Qx 0 ; 0 Qdx/dt ]
+     */
+    private synchronized void predict(){
+        x_tp[0] = x_t[0] + dT * (z_t[1] - x_t[1]);
+        x_tp[1] = x_t[1];
+
+        P_tp[0][0] = P_t[0][0] + dT * (dT * P_t[1][1] - P_t[0][1] - P_t[1][0] + Q[0][0]);
+        P_tp[0][1] = P_t[0][1] - dT * P_t[1][1];
+        P_tp[1][0] = P_t[1][0] - dT * P_t[1][1];
+        P_tp[1][1] = P_t[1][1] - Q[1][1] * dT;
     }
 
     /*
-    Measurement equations
-        x_t = x_t + K_t * ( z_t - H_t * x_t )
-        P_t = P_t - K_t * H_t * P_t
+      Measurement equations
+
+        y_t = z_t - H_t * x_tp
+            H_t = [ 1 0 ]
+          |
+          -->  y_t = z_t - x_tp[0]
+
+        S_t = H_t * P_tp * transp(H_t) + R
+            H_t = [ 1 0 ]
+          |
+          --> S_t = P_tp[0][0] + R
+
+        K_t = P_tp * transp(H_t) * inv(S_t)
+          |
+          --> K_t = [ P_tp[0][0] P_tp[1][0] ] / S_t
+
+        x_t = x_tp + K_t * y_t
+
+        P_t = (I - K_t * H_t) * P_tp
+          |
+          --> P_t = P_tp - [ K_t[i] * P_tp[i][j] ]
      */
-    private synchronized void measurementCalculation(){
-        float[] firstMember = Matrices.Mul2byVector(H_t, x_t);
-        firstMember = Matrices.SubVectors(z_t, firstMember);
-        firstMember = Matrices.Mul2byVector(K_t, firstMember);
+    private synchronized void measure(){
+        y_t = z_t[0] - x_tp[0];
 
-        x_t = Matrices.SumVectors(x_t, firstMember);
+        S_t = P_tp[0][0] + R;
 
+        if (S_t == 0)
+            S_t = 1;
 
-        float[][] secondMember = Matrices.Mul2by2( K_t, Matrices.Mul2by2( H_t, P_t ) );
+        K_t[0] = P_tp[0][0] / S_t;
+        K_t[1] = P_tp[1][0] / S_t;
 
-        P_t = Matrices.Sub2by2( P_t, secondMember );
+        x_t[0] = x_tp[0] + K_t[0] * y_t;
+        x_t[1] = x_tp[1] + K_t[1] * y_t;
+
+        P_t[0][0] = P_tp[0][0] * (1 - K_t[0]);
+        P_t[0][1] = P_tp[0][1] * (1 - K_t[0]);
+        P_t[1][0] = P_tp[1][0] * (1 - K_t[1]);
+        P_t[1][1] = P_tp[1][1] * (1 - K_t[1]);
     }
 
-
+    public float[] getState(){
+        return x_t.clone();
+    }
 }

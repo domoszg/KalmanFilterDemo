@@ -67,8 +67,8 @@ public class Matrices {
     protected  static float[][] Inv2by2(float[][] a){
         float det = a[0][0] * a[1][1] - a[0][1] * a[1][0];
 
-        if (det == 0)
-            throw new RuntimeException("Matrix inverse non-existent");
+        if (Matrices.isNull2by2(a) || det == 0)
+            return a;
 
         float[][] res = new float[][]{{a[1][1], -a[0][1]}, {-a[1][0], a[0][0]}};
         for (int i = 0; i < 2; i++)
@@ -76,6 +76,10 @@ public class Matrices {
                 res[i][j] /= det;
 
         return res;
+    }
+
+    protected static boolean isNull2by2(float[][] a) {
+        return a.equals(new float[2][2]);
     }
 
     protected static float[][] Transp3by3(float[][] a){
