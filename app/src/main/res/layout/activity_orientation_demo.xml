@@ -216,4 +216,25 @@
         android:layout_below="@+id/gyroPitch"
         android:layout_alignLeft="@+id/gyroPitch"
         android:layout_alignStart="@+id/gyroPitch" />
+
+    <Button
+        style="?android:attr/buttonStyleSmall"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Record"
+        android:id="@+id/fileRecord"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
+        android:width="200px"
+        android:onClick="fileOpenClose" />
+
+    <EditText
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/fileNameField"
+        android:layout_alignBottom="@+id/fileRecord"
+        android:layout_toLeftOf="@+id/fileRecord"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true" />
 </RelativeLayout>

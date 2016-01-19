@@ -57,6 +57,7 @@ public class KalmanFilter {
     private synchronized void predict(){
         x_tp[0] = x_t[0] + dT * (z_t[1] - x_t[1]);
         x_tp[1] = x_t[1];
+        toFirstPeriod(x_tp);
 
         P_tp[0][0] = P_t[0][0] + dT * (dT * P_t[1][1] - P_t[0][1] - P_t[1][0] + Q[0][0]);
         P_tp[0][1] = P_t[0][1] - dT * P_t[1][1];
@@ -100,11 +101,17 @@ public class KalmanFilter {
 
         x_t[0] = x_tp[0] + K_t[0] * y_t;
         x_t[1] = x_tp[1] + K_t[1] * y_t;
+        toFirstPeriod(x_t);
 
         P_t[0][0] = P_tp[0][0] * (1 - K_t[0]);
         P_t[0][1] = P_tp[0][1] * (1 - K_t[0]);
         P_t[1][0] = P_tp[1][0] * (1 - K_t[1]);
         P_t[1][1] = P_tp[1][1] * (1 - K_t[1]);
+    }
+
+    private void toFirstPeriod(float[] a){
+        a[0] %= (float) 2*Math.PI;
+        a[1] %= (float) 2*Math.PI;
     }
 
     public float[] getState(){
