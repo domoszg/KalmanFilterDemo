@@ -14,7 +14,7 @@ public class KalmanFilter {
     float[][] P_tp = new float[2][2];
     float[][] P_t = new float[2][2];
 
-    float y_t = 0;
+    float[] y_t = new float[2];
     float S_t = 0;
     float[] K_t = new float[2];
 
@@ -89,7 +89,8 @@ public class KalmanFilter {
           --> P_t = P_tp - [ K_t[i] * P_tp[i][j] ]
      */
     private synchronized void measure(){
-        y_t = z_t[0] - x_tp[0];
+        y_t[0] = z_t[0] - x_tp[0];
+        y_t[1] = z_t[1];
 
         S_t = P_tp[0][0] + R;
 
@@ -99,8 +100,8 @@ public class KalmanFilter {
         K_t[0] = P_tp[0][0] / S_t;
         K_t[1] = P_tp[1][0] / S_t;
 
-        x_t[0] = x_tp[0] + K_t[0] * y_t;
-        x_t[1] = x_tp[1] + K_t[1] * y_t;
+        x_t[0] = x_tp[0] + K_t[0] * y_t[0];
+        x_t[1] = x_tp[1] + K_t[1] * y_t[1];
         toFirstPeriod(x_t);
 
         P_t[0][0] = P_tp[0][0] * (1 - K_t[0]);
@@ -114,7 +115,7 @@ public class KalmanFilter {
         a[1] %= (float) 2*Math.PI;
     }
 
-    public float[] getState(){
+    public synchronized float[] getState(){
         return x_t.clone();
     }
 }

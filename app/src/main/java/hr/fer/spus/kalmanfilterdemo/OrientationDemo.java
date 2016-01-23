@@ -29,6 +29,12 @@ public class OrientationDemo extends AppCompatActivity implements SensorEventLis
     private float[] gyroEarth = new float[3];
     private long prevTime, dT;
 
+    private static final int period = 50;
+    private static final int UIperiod = 100;
+    private static final float Q_angle = (float) 0.001;
+    private static final float Q_dAdT = (float) 0.003;
+    private static final float R_angle = (float) 0.03;
+
     private boolean filtersInitialized = false;
     private KalmanFilter azimuthFilter, pitchFilter, rollFilter;
     private float[] filteredStateValues = new float[3];
@@ -52,8 +58,8 @@ public class OrientationDemo extends AppCompatActivity implements SensorEventLis
         accMag = sm.getDefaultSensor(Sensor.TYPE_ORIENTATION);
         gyro = sm.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
 
-        sm.registerListener(this, accMag, SensorManager.SENSOR_DELAY_GAME);
-        sm.registerListener(this, gyro, SensorManager.SENSOR_DELAY_GAME);
+        sm.registerListener(this, accMag, SensorManager.SENSOR_DELAY_FASTEST);
+        sm.registerListener(this, gyro, SensorManager.SENSOR_DELAY_FASTEST);
 
 
         // Schedule UI updates
@@ -62,7 +68,7 @@ public class OrientationDemo extends AppCompatActivity implements SensorEventLis
             public void run() {
                 runOnUiThread(showMeasurements);
             }
-        }, 2000, 100, TimeUnit.MILLISECONDS);
+        }, 2000, UIperiod, TimeUnit.MILLISECONDS);
 
 
         scheduler.scheduleAtFixedRate(new Runnable() {
@@ -72,9 +78,9 @@ public class OrientationDemo extends AppCompatActivity implements SensorEventLis
                 prevTime = SystemClock.elapsedRealtime();
 
                 if (!filtersInitialized){
-                    azimuthFilter = new KalmanFilter(new float[]{accMagValues[0], gyroEarth[0]}, new float[2][2], 0);
-                    pitchFilter = new KalmanFilter(new float[]{accMagValues[1], gyroEarth[1]}, new float[2][2], 0);
-                    rollFilter = new KalmanFilter(new float[]{accMagValues[2], gyroEarth[2]}, new float[2][2], 0);
+                    azimuthFilter = new KalmanFilter(new float[]{accMagValues[0], gyroEarth[0]}, new float[][]{{Q_angle, 0}, {0, Q_dAdT}}, R_angle);
+                    pitchFilter = new KalmanFilter(new float[]{accMagValues[1], gyroEarth[1]}, new float[][]{{Q_angle, 0}, {0, Q_dAdT}}, R_angle);
+                    rollFilter = new KalmanFilter(new float[]{accMagValues[2], gyroEarth[2]}, new float[][]{{Q_angle, 0}, {0, Q_dAdT}}, R_angle);
 
                     filtersInitialized = true;
                 }
@@ -104,7 +110,7 @@ public class OrientationDemo extends AppCompatActivity implements SensorEventLis
                     }
                 }
             }
-        }, 5000, 100, TimeUnit.MILLISECONDS);
+        }, 5000, period, TimeUnit.MILLISECONDS);
 
 
         // Handle Record button
